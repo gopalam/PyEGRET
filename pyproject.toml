@@ -1,0 +1,45 @@
+# Package metadata, so that others can `pip install` PyEGRET.
+#
+# This file changes nothing about the code. PyEGRET still works without being
+# installed: put the project folder on sys.path and `import pyegret`.
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyegret"
+version = "0.1.0"
+description = "Python translation of the USGS EGRET R package and the WRTDS method for river water-quality trends"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "Gopal Mulukutla" }]
+keywords = ["hydrology", "water quality", "WRTDS", "EGRET", "trend analysis",
+            "flow normalization", "USGS"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Hydrology",
+]
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "scipy>=1.9",
+    "matplotlib>=3.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/gopalam/PyEGRET"
+Documentation = "https://github.com/gopalam/PyEGRET/tree/main/docs"
+Issues = "https://github.com/gopalam/PyEGRET/issues"
+Changelog = "https://github.com/gopalam/PyEGRET/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+usgs = ["dataretrieval>=1.3"]          # the USGS data readers
+test = ["pytest>=7.0", "rdata>=0.11"]  # the tests, and the comparisons with R
+
+[tool.setuptools.packages.find]
+include = ["pyegret*"]
