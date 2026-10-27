@@ -2,10 +2,10 @@
 Verify the modern USGS Water Data API retrieval. Run this on a machine with
 ordinary internet access.
 
-The USGS endpoints are unreachable from the sandboxes this package was
-developed in, so ``pyegret/data/read_waterdata.py`` is the one module written
-without being exercised against the live service. This script exercises it and
-prints everything needed to fix a mismatch in one round trip.
+It exercises ``pyegret/data/read_waterdata.py`` against the live service and
+prints everything needed to fix a mismatch in one round trip. It was last run
+successfully on 27 October 2026 with dataretrieval 1.4.0; rerun it whenever
+USGS changes the service or dataretrieval changes its interface.
 
 The strong check is at the end: it fetches the Choptank River record from the
 live API and compares it against the same record as EGRET shipped it in
@@ -145,6 +145,8 @@ def compare_with_reference(fetched: dict) -> None:
     sample_r = elist["Sample"]
     for frame in (daily_r, sample_r):
         frame.columns = [str(c) for c in frame.columns]
+        # rdata gives R Dates as days since 1970-01-01.
+        frame["Date"] = pd.to_datetime(frame["Date"], unit="D", origin="1970-01-01")
 
     daily = fetched.get("daily")
     if daily is not None:
@@ -173,6 +175,11 @@ def compare_with_reference(fetched: dict) -> None:
 
     sample = fetched.get("sample")
     if sample is not None:
+        # The live service returns every result, as R's readNWISSample does;
+        # EGRET's shipped record has the first result of each day.
+        n_live = len(sample)
+        sample = sample.drop_duplicates(subset="Date")
+        print(f"\nSample: live results {n_live}, on {len(sample)} distinct days")
         merged = sample.merge(
             sample_r[["Date", "ConcHigh"]].rename(columns={"ConcHigh": "Conc_egret"}),
             on="Date", how="inner",
@@ -184,6 +191,12 @@ def compare_with_reference(fetched: dict) -> None:
                          / merged["Conc_egret"].replace(0, np.nan))
             print(f"  concentration agreement: median {np.nanmedian(rel):.2e}  "
                   f"worst {np.nanmax(rel):.2e}")
+            by_date = sample_r.set_index("Date")
+            uncen_r = by_date.loc[merged["Date"], "Uncen"]
+            same_censoring = np.array_equal(merged["Uncen"].to_numpy(),
+                                            uncen_r.to_numpy(dtype=int))
+            if np.nanmax(rel) < 1e-9 and same_censoring and len(merged) == len(sample_r):
+                print("  PASS - the first result of each day reproduces EGRET's record exactly.")
 
 
 def main() -> None:

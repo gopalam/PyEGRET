@@ -1,15 +1,14 @@
 """
 Tests for the modern USGS Water Data API retrieval.
 
-The USGS endpoints cannot be reached from the environment this package is
-developed in, so the network call itself is stubbed and everything around it -
-query construction, unit handling, censoring, column mapping - is tested
-against synthetic responses shaped like the real ones.
+The network call itself is stubbed, and everything around it - query
+construction, unit handling, censoring, column mapping - is tested against
+synthetic responses shaped like the real ones (the Samples response mirrors
+what the live service returned in October 2026).
 
-That leaves exactly one thing unverified: whether the real service uses the
-column names assumed here. ``diagnostics/check_waterdata.py`` checks that
-against the live API, and compares the result to EGRET's own copy of the same
-Choptank record.
+``diagnostics/check_waterdata.py`` checks the readers against the live API and
+compares the result with EGRET's own copy of the Choptank record; rerun it
+when USGS or dataretrieval change.
 """
 from __future__ import annotations
 
@@ -116,9 +115,14 @@ def stub_waterdata(monkeypatch):
         return calls.get("_info_response", pd.DataFrame())
 
     # A stand-in for the dataretrieval.waterdata module: a namespace holding
-    # the three functions PyEGRET calls.
+    # the functions PyEGRET calls.
+    def get_reference_table(collection, query=None, **kwargs):
+        calls["reference"] = (collection, query)
+        return calls.get("_reference_response", pd.DataFrame())
+
     stub = types.SimpleNamespace(get_daily=get_daily, get_samples=get_samples,
-                                 get_monitoring_locations=get_monitoring_locations)
+                                 get_monitoring_locations=get_monitoring_locations,
+                                 get_reference_table=get_reference_table)
 
     def import_stub():
         return stub
@@ -203,13 +207,23 @@ def test_read_daily_unknown_columns_name_what_came_back(stub_waterdata):
 # ---------------------------------------------------------------------------
 
 def _stub_samples_response():
+    """Shaped like the live Samples service (fullphyschem), October 2026."""
     return pd.DataFrame({
-        "monitoring_location_id": ["USGS-01491000"] * 4,
-        "activity_start_date": ["2000-01-05", "2000-02-09", "2000-03-15", "2000-04-19"],
-        "result_measure_value": [1.20, 0.85, np.nan, 1.05],
-        "result_detection_condition": ["", "", "Not Detected", ""],
-        "detection_limit_measure_value": [np.nan, np.nan, 0.05, np.nan],
-        "usgs_pcode": ["00631"] * 4,
+        "Location_Identifier": ["USGS-01491000"] * 5,
+        "Activity_StartDate": ["2000-01-05", "2000-02-09", "2000-03-15", "2000-04-19",
+                               "2000-01-05"],
+        "Activity_StartDateTime": ["2000-01-05 15:30:00+00:00", "2000-02-09 16:00:00+00:00",
+                                   "2000-03-15 15:00:00+00:00", "2000-04-19 15:45:00+00:00",
+                                   "2000-01-05 15:45:00+00:00"],
+        "Activity_TypeCode": ["Sample-Routine"] * 4 + ["Sample-Integrated Time Series"],
+        "Activity_Media": ["Water"] * 5,
+        "Activity_MediaSubdivision": ["Surface water"] * 5,
+        "Result_Characteristic": ["Inorganic nitrogen (nitrate and nitrite)"] * 5,
+        "Result_Measure": [1.20, 0.85, np.nan, 1.05, 1.25],
+        "Result_MeasureUnit": ["mg/L", "mg/L", np.nan, "mg/L", "mg/L"],
+        "Result_ResultDetectionCondition": [np.nan, np.nan, "Not Detected", np.nan, np.nan],
+        "DetectionLimit_MeasureA": [np.nan, np.nan, 0.05, np.nan, np.nan],
+        "USGSpcode": ["00631"] * 5,
     })
 
 
@@ -227,13 +241,62 @@ def test_read_sample_query_uses_samples_service_names(canned):
     assert query["monitoring_location_id"] == "USGS-01491000"
     assert query["usgs_pcode"] == "00631"
     assert query["service"] == "results"
+    assert query["profile"] == "fullphyschem"
     assert query["activity_start_date_lower"] == "1979-10-01"
     assert query["activity_start_date_upper"] == "2011-09-30"
+
+
+def test_read_sample_a_name_is_queried_as_a_characteristic(canned):
+    """As in R: anything but a five-digit code is a characteristic name."""
+    rw.read_waterdata_sample("01491000", "Phosphorus")
+    query = canned["samples"]
+    assert query["characteristic"] == "Phosphorus"
+    assert "usgs_pcode" not in query
+
+
+def test_read_sample_keeps_every_result_as_r_does(canned):
+    """R keeps several results on one day; it does not average or drop them."""
+    sample = rw.read_waterdata_sample("01491000", "00631", verbose=False)
+    assert len(sample) == 5
+    same_day = sample[sample["Date"] == pd.Timestamp("2000-01-05")]
+    assert list(same_day["ConcHigh"]) == [1.20, 1.25]
+
+
+def test_read_sample_carries_the_descriptive_columns(canned):
+    sample = rw.read_waterdata_sample("01491000", "00631", verbose=False)
+    for column in ("ActivityTypeCode", "ActivityMediaName", "ActivityStartDateTime",
+                   "CharacteristicName", "USGSPCode"):
+        assert column in sample.columns
+    assert set(sample["ActivityTypeCode"]) == {"Sample-Routine",
+                                               "Sample-Integrated Time Series"}
+
+
+def test_read_sample_reports_characteristics_that_vary(canned, capsys):
+    rw.read_waterdata_sample("01491000", "00631")
+    printed = capsys.readouterr()
+    assert "5 samples retrieved." in printed.out
+    assert "Multiple values for some sample characteristics" in printed.out
+    assert "ActivityTypeCode" in printed.out
+
+
+def test_read_sample_recognises_r_non_detect_wordings():
+    """processQWData marks these, in any case, as "<"."""
+    texts = ["Not Detected", "Non-Detect", "non detect", "Detected Not Quantified",
+             "Below Quantification Limit", np.nan]
+    frame = pd.DataFrame({
+        "ActivityStartDate": ["2000-01-0" + str(i + 1) for i in range(6)],
+        "ResultMeasureValue": [np.nan] * 5 + [0.7],
+        "ResultDetectionConditionText": texts,
+        "DetectionQuantitationLimitMeasure.MeasureValue": [0.05] * 5 + [np.nan],
+    })
+    processed = rw._process_qw_data(frame, verbose=False)
+    assert list(processed["qualifier"]) == ["<"] * 5 + [""]
+    assert list(processed["value"]) == [0.05] * 5 + [0.7]
 
 def test_read_sample_detected_values_are_uncensored(canned):
     sample = rw.read_waterdata_sample("01491000", "00631")
     detected = sample[sample["Uncen"] == 1]
-    assert len(detected) == 3
+    assert len(detected) == 4
     assert np.all((detected["ConcLow"] == detected["ConcHigh"]))
 
 def test_read_sample_non_detect_uses_the_reporting_limit(canned):
@@ -295,3 +358,36 @@ def test_read_info_empty_response_raises(stub_waterdata):
     stub_waterdata["_info_response"] = pd.DataFrame()
     with pytest.raises(ValueError, match="No monitoring location"):
         rw.read_waterdata_info("01491000")
+
+
+def test_read_info_takes_parameter_name_and_units_from_the_code_table(stub_waterdata):
+    """As R readNWISInfo does, from the USGS parameter-code table."""
+    stub_waterdata["_info_response"] = pd.DataFrame([{
+        "id": "USGS-01491000",
+        "monitoring_location_name": "CHOPTANK RIVER NEAR GREENSBORO, MD",
+        "drainage_area": 113.0,
+    }])
+    stub_waterdata["_reference_response"] = pd.DataFrame([{
+        "parameter_code": "00631", "parameter_name": "NO3+NO2, wf",
+        "unit_of_measure": "mg/l as N",
+    }])
+    info = rw.read_waterdata_info("01491000", "00631")
+    assert stub_waterdata["reference"] == ("parameter-codes", {"id": "00631"})
+    assert info["paramShortName"].iloc[0] == "NO3+NO2, wf"
+    assert info["param.units"].iloc[0] == "mg/l as N"
+    assert info["paramNumber"].iloc[0] == "00631"
+    assert info["station_nm"].iloc[0] == "CHOPTANK RIVER NEAR GREENSBORO, MD"
+    assert info["paStart"].iloc[0] == 10
+    assert info["paLong"].iloc[0] == 12
+
+
+def test_read_info_warns_when_units_are_not_mg_per_litre(stub_waterdata):
+    stub_waterdata["_info_response"] = pd.DataFrame([{
+        "id": "USGS-01491000", "monitoring_location_name": "Somewhere",
+    }])
+    stub_waterdata["_reference_response"] = pd.DataFrame([{
+        "parameter_code": "00095", "parameter_name": "Sp cond",
+        "unit_of_measure": "uS/cm @25C",
+    }])
+    with pytest.warns(UserWarning, match="mg/L"):
+        rw.read_waterdata_info("01491000", "00095")

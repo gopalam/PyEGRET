@@ -27,9 +27,9 @@ top level: `from pyegret import merge_report, model_estimation, wrtds_kalman`.
 | `makeAugmentedSample` | `make_augmented_sample` | `pyegret.data.quality` | Draw a plausible value for each censored sample, for plotting. |
 | `populateConcentrations` | `populate_concentrations` | `pyegret.data.quality` | Turn reported values and remark codes into EGRET's censoring bounds. |
 | `processQWData` | `process_qw_data` | `pyegret.data.quality` | Build an EGRET Sample frame from a table of dates, values and remarks. |
-| `readNWISDaily` | `read_nwis_daily` | `pyegret.data.read_nwis` | Fetch USGS NWIS mean-daily values and return an EGRET Daily DataFrame. |
-| `readNWISInfo` | `read_nwis_info` | `pyegret.data.read_nwis` | Fetch site and parameter metadata from USGS NWIS. |
-| `readNWISSample` | `read_nwis_sample` | `pyegret.data.read_nwis` | Fetch USGS NWIS discrete water-quality samples via the Water Quality Portal. |
+| `readNWISDaily` | `read_nwis_daily` | `pyegret.data.read_nwis` | Legacy NWIS services; use `read_waterdata_daily`. Fetch USGS NWIS mean-daily values and return an EGRET Daily DataFrame. |
+| `readNWISInfo` | `read_nwis_info` | `pyegret.data.read_nwis` | Legacy NWIS services; use `read_waterdata_info`. Fetch site and parameter metadata from USGS NWIS. |
+| `readNWISSample` | `read_nwis_sample` | `pyegret.data.read_nwis` | Legacy NWIS services; use `read_waterdata_sample`. Fetch USGS NWIS discrete water-quality samples via the Water Quality Portal. |
 | `readDataFromFile` | `read_data_from_file` | `pyegret.data.read_user` | Read a delimited file whose first column is a date. |
 | `readUserDaily` | `read_user_daily` | `pyegret.data.read_user` | Read a two-column daily discharge file into an EGRET Daily DataFrame. |
 | `readUserSample` | `read_user_sample` | `pyegret.data.read_user` | Read a water-quality file into an EGRET Sample DataFrame. |
