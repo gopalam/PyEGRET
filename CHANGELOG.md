@@ -6,8 +6,27 @@
   runnable locally or in Google Colab. Tutorial 1 is a complete WRTDS analysis
   of the Choptank River; tutorial 2 covers preparing your own data. The
   Choptank data are included as plain CSV files.
+- Tutorial 3 downloads a record from the USGS Water Data APIs and checks it
+  against EGRET's.
 - `diagnostics/run_tutorials.py` runs the notebooks; the test workflow now
-  runs them on every push, and `check_style.py` checks their code.
+  runs them on every push (the downloading ones in a separate job that is
+  allowed to fail when USGS is unavailable), and `check_style.py` checks their
+  code.
+- **Fixed `read_waterdata_sample` against the live USGS Samples service**,
+  which names its columns differently from what the reader assumed. It now
+  follows R's `readNWISSample` step for step: the `fullphyschem` profile, R's
+  renaming to Water Quality Portal names, `processQWData`'s non-detect
+  wordings, `compressData` and `remove_zeros`. As in R it keeps every result,
+  carries the descriptive columns (activity type, medium, start time and
+  others), and reports characteristics that vary. A parameter given as a name
+  rather than a five-digit code is queried as a characteristic.
+- `read_waterdata_info` now takes the parameter's name and units from the USGS
+  parameter-code table, as R does, warns when the units are not mg/L, and sets
+  `station_nm`, `paStart` and `paLong`.
+- `diagnostics/check_waterdata.py` compares a live download with EGRET's
+  Choptank record; on 27 October 2026 the samples matched exactly and the
+  discharge differed only by USGS's later rounding to three significant
+  figures.
 
 ## 0.1.0 - 2026-10-26
 

@@ -126,7 +126,8 @@ regression least. Details in [docs/validation.md](docs/validation.md).
 
 ## Documentation
 
-- [Tutorials](tutorials/): a complete analysis, and bringing in your own data
+- [Tutorials](tutorials/): a complete analysis, bringing in your own data, and
+  downloading data from USGS
 - [Installation](docs/installation.md)
 - [Getting started](docs/getting_started.md): the eList, data, units,
   censoring, the period of analysis

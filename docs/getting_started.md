@@ -106,10 +106,16 @@ sample = read_waterdata_sample(site, "00631", "1979-10-01", "2011-09-30")
 info = read_waterdata_info(site, "00631")
 ```
 
-These replace R's `readNWISDaily`, `readNWISSample` and `readNWISInfo`, which
-in current EGRET also call the new USGS services. The older `read_nwis_*`
-functions remain for now. The Water Data readers have so far been tested
-against recorded responses only; please report any problem with live data.
+These translate R's `readNWISDaily`, `readNWISSample` and `readNWISInfo`,
+which in current EGRET also call the new USGS services. As in R,
+`read_waterdata_sample` keeps every result it receives, including several on
+one day, and carries descriptive columns (activity type, medium, start time)
+so that you can decide what to keep; it prints a note when those vary.
+[Tutorial 3](../tutorials/03_usgs_data.ipynb) walks through a download and
+those decisions. The readers were checked against the live service in October
+2026: the Choptank River download reproduces the record distributed with
+EGRET. The older `read_nwis_*` functions use the legacy NWIS services, which
+USGS is retiring.
 
 ### Then join them
 

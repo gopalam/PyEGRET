@@ -42,4 +42,22 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install numpy pandas scipy matplotlib nbclient nbformat ipykernel
       - name: Run the tutorials
-        run: python diagnostics/run_tutorials.py
+        run: python diagnostics/run_tutorials.py --offline
+
+  usgs:
+    # Runs the tutorials that download from USGS. A failure here may only mean
+    # the service was busy or has changed, so it does not fail the workflow;
+    # check the log when it is red.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy matplotlib nbclient nbformat ipykernel dataretrieval
+      - name: Run the USGS tutorials
+        run: python diagnostics/run_tutorials.py --internet

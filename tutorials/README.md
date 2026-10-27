@@ -8,10 +8,10 @@ can read them here on GitHub, figures and all, without running anything.
 |---|---|---|
 | 1 | [A WRTDS analysis from start to finish](01_choptank_walkthrough.ipynb) | The whole workflow on the Choptank River, following EGRET's own vignette: reading data, fitting the model, checking it, annual and flow-normalized results, contour surfaces, generalized flow normalization and `run_pairs`, WRTDS-Kalman. About a minute to run. |
 | 2 | [Bringing in your own data](02_your_own_data.ipynb) | File formats, discharge units and date formats, censored ("less than") values, constituents reported in parts, converting a laboratory export, site information, checking the record before fitting, and the period of analysis. |
+| 3 | [Downloading data from USGS](03_usgs_data.ipynb) | Finding site numbers and parameter codes, downloading discharge, samples and site information, what to do about several results on one day and oddly coded results, checking the download against EGRET's record, and keeping a copy of what you analysed. Needs an internet connection. |
 
-More are planned: downloading data from USGS, interpreting trends with
-`run_pairs`, `run_groups` and `run_series`, WRTDS-Kalman load estimates, and
-model diagnostics.
+More are planned: interpreting trends with `run_pairs`, `run_groups` and
+`run_series`, WRTDS-Kalman load estimates, and model diagnostics.
 
 ## Running them
 
@@ -36,6 +36,7 @@ the public domain.
 ## For contributors
 
 `python diagnostics/run_tutorials.py` runs every notebook and reports any that
-fail; with `--save` it also stores the fresh results in the notebooks. Code in
+fail; with `--save` it also stores the fresh results in the notebooks, and
+with `--offline` it skips the ones that download data. Code in
 the notebooks follows the same style rules as the package, and
 `diagnostics/check_style.py` checks it.

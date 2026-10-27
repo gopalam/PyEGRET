@@ -7,8 +7,14 @@ figures and tables shown on GitHub match the current code.
 
 Needs nbformat, nbclient and ipykernel (pip install nbclient ipykernel).
 
-Run:  python diagnostics/run_tutorials.py           # check only
-      python diagnostics/run_tutorials.py --save    # check and save outputs
+Notebooks that download data (marked ``"pyegret": {"needs_internet": true}``
+in their metadata) can be left out with ``--offline``, or run alone with
+``--internet``; name notebooks on the command line to run only those.
+
+Run:  python diagnostics/run_tutorials.py             # check only
+      python diagnostics/run_tutorials.py --save      # check and save outputs
+      python diagnostics/run_tutorials.py --offline   # skip the downloads
+      python diagnostics/run_tutorials.py 03_usgs_data.ipynb
 Exit status is 0 when every notebook runs, 1 otherwise.
 """
 import glob
@@ -42,9 +48,34 @@ def run_notebook(path: str, save: bool) -> str:
     return ""
 
 
+def needs_internet(path: str) -> bool:
+    """True if the notebook's metadata says it downloads data."""
+    import json
+
+    with open(path, encoding="utf-8") as handle:
+        notebook = json.load(handle)
+    settings = notebook["metadata"].get("pyegret", {})
+    return bool(settings.get("needs_internet", False))
+
+
 def main() -> int:
     save = "--save" in sys.argv
-    paths = sorted(glob.glob(os.path.join(TUTORIALS, "*.ipynb")))
+    offline = "--offline" in sys.argv
+    internet_only = "--internet" in sys.argv
+    names = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
+
+    paths = []
+    for path in sorted(glob.glob(os.path.join(TUTORIALS, "*.ipynb"))):
+        if names and os.path.basename(path) not in names:
+            continue
+        online = needs_internet(path)
+        if offline and online:
+            print(f"skipped {os.path.basename(path)} (needs the internet)")
+            continue
+        if internet_only and not online:
+            continue
+        paths.append(path)
+
     failed = 0
     for path in paths:
         start = time.time()
