@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **Tutorials**: Jupyter notebooks in `tutorials/`, readable on GitHub and
+  runnable locally or in Google Colab. Tutorial 1 is a complete WRTDS analysis
+  of the Choptank River; tutorial 2 covers preparing your own data. The
+  Choptank data are included as plain CSV files.
+- `diagnostics/run_tutorials.py` runs the notebooks; the test workflow now
+  runs them on every push, and `check_style.py` checks their code.
+
 ## 0.1.0 - 2026-10-26
 
 First public release.

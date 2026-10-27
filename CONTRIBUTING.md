@@ -39,5 +39,8 @@ python -m pytest
 python diagnostics/check_style.py
 ```
 
-Both must pass. New translations need tests, and wherever R output can be
+Both must pass. If you changed anything the tutorials use, also run
+`python diagnostics/run_tutorials.py` (it needs `pip install nbclient
+ipykernel`); add `--save` to store the new results in the notebooks. New
+translations need tests, and wherever R output can be
 had, a comparison with it (see `tests/test_egret_trend_reference.py`).

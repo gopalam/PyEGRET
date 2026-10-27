@@ -1,7 +1,8 @@
 """
 Check the code against the style rules in CLAUDE_CODE_INSTRUCTIONS.md.
 
-Reports, for pyegret/, tests/, diagnostics/ and examples/:
+Reports, for pyegret/, tests/, diagnostics/ and examples/, and for the code
+cells of the notebooks in tutorials/:
 
 - any class definition (no object-oriented code);
 - any method called on the result of another call, e.g.
@@ -13,6 +14,7 @@ Run:  python diagnostics/check_style.py
 Exit status is 0 when everything is clean, 1 otherwise.
 """
 import ast
+import glob
 import os
 import sys
 
@@ -33,6 +35,28 @@ def _called_on_a_call(node) -> bool:
 def check_file(path: str) -> list:
     with open(path, encoding="utf-8") as handle:
         source = handle.read()
+    return check_source(source)
+
+
+def check_notebook(path: str) -> list:
+    """Check each code cell of a notebook; lines are reported as cell:line."""
+    import json
+
+    with open(path, encoding="utf-8") as handle:
+        notebook = json.load(handle)
+    problems = []
+    number = 0
+    for cell in notebook["cells"]:
+        if cell["cell_type"] != "code":
+            continue
+        number = number + 1
+        source = "".join(cell["source"])
+        for line, text in check_source(source):
+            problems.append((f"cell {number}, line {line}", text))
+    return problems
+
+
+def check_source(source: str) -> list:
     try:
         tree = ast.parse(source)
     except SyntaxError as error:
@@ -61,6 +85,10 @@ def main() -> int:
                 for line, text in check_file(path):
                     print(f"{os.path.relpath(path, ROOT)}:{line}: {text}")
                     total = total + 1
+    for path in sorted(glob.glob(os.path.join(ROOT, "tutorials", "*.ipynb"))):
+        for where, text in check_notebook(path):
+            print(f"{os.path.relpath(path, ROOT)}, {where}: {text}")
+            total = total + 1
     # PyEGRET must import straight from the folder, with nothing installed.
     # Run from a neutral folder with PYTHONPATH cleared, so that only the
     # sys.path.insert below can find it (but user-installed numpy etc. still load).

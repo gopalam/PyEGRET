@@ -18,8 +18,9 @@ For the reference implementation, use EGRET:
 
 ## Licenses
 
-- The PyEGRET source code (`pyegret/`, `tests/*.py`, `diagnostics/`,
-  `examples/`, `docs/`) is released under the BSD 3-Clause License; see
+- The PyEGRET source code and documentation (`pyegret/`, `tests/*.py`,
+  `diagnostics/`, `examples/`, `docs/`, and the notebooks in `tutorials/`) are
+  released under the BSD 3-Clause License; see
   `LICENSE`.
 - `reference/EGRET_R/` and `reference/EGRETci_R/` are unmodified copies of the
   R sources of EGRET 3.0.12 and EGRETci 2.0.5, kept for line-by-line
@@ -29,6 +30,9 @@ For the reference implementation, use EGRET:
   `ChainBridge.TP.RData`, `pairResults.rds`, `pairResults2.rds`,
   `eListOut.rds`) come unmodified from the EGRET repository and are likewise
   CC0 1.0 (public domain). They are used only to check PyEGRET against R.
+- `tutorials/data/choptank_daily.csv` and `choptank_sample.csv` are the
+  Daily and Sample of the same `Choptank_eList`, written out as CSV (discharge
+  converted back to cubic feet per second), and are likewise public domain.
 
 The BSD license applies to the Python translation only; it adds no
 restriction to the public-domain material above.

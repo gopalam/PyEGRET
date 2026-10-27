@@ -92,10 +92,10 @@ fig, ax = plots.plot_conc_hist(elist)         # annual and flow-normalized histo
 pairs = run_pairs(elist, 1990, 2020, window_side=7)   # change, and its causes
 ```
 
-[docs/getting_started.md](docs/getting_started.md) explains the eList, the
-data formats, units and censoring, and how to read data from USGS.
-`examples/choptank_wrtds.py` runs the whole workflow offline on the Choptank
-River data that ships with EGRET.
+The [tutorials](tutorials/) walk through a complete analysis, and through
+preparing your own data, as Jupyter notebooks you can read on GitHub or run in
+Google Colab. [docs/getting_started.md](docs/getting_started.md) explains the
+eList, the data formats, units and censoring, and how to read data from USGS.
 
 ## Coming from R EGRET
 
@@ -126,6 +126,7 @@ regression least. Details in [docs/validation.md](docs/validation.md).
 
 ## Documentation
 
+- [Tutorials](tutorials/): a complete analysis, and bringing in your own data
 - [Installation](docs/installation.md)
 - [Getting started](docs/getting_started.md): the eList, data, units,
   censoring, the period of analysis
@@ -162,8 +163,8 @@ others, 2015) are in [NOTICE.md](NOTICE.md).
 ## License
 
 PyEGRET is released under the [BSD 3-Clause License](LICENSE). The R sources
-in `reference/` and the reference data in `tests/reference/` are USGS works
-in the public domain (CC0 1.0); see [NOTICE.md](NOTICE.md).
+in `reference/`, the reference data in `tests/reference/` and the example
+data in `tutorials/data/` are USGS works in the public domain (CC0 1.0); see [NOTICE.md](NOTICE.md).
 
 PyEGRET is not developed, reviewed or endorsed by the U.S. Geological
 Survey. For the reference implementation, use
