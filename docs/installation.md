@@ -22,7 +22,7 @@ pip install "pyegret[usgs,test] @ git+https://github.com/gopalam/PyEGRET"
 ```
 
 A particular release can be installed by adding its tag, for example
-`...PyEGRET@v0.1.0`. To update later, run the same command with `--upgrade`.
+`...PyEGRET@v0.2.0`. To update later, run the same command with `--upgrade`.
 
 In a conda environment, install the four dependencies with conda first
 (`conda install numpy pandas scipy matplotlib`) and then run the pip command.

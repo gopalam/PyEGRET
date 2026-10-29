@@ -1,6 +1,6 @@
 # PyEGRET - status and roadmap
 
-Last updated 2026-10-29.
+Last updated 2026-10-29, at version 0.2.0.
 
 PyEGRET translates the USGS R packages EGRET (3.0.12) and EGRETci (2.0.5). The R sources are in `reference/`. How the code must be
 written is in `docs/dev/CLAUDE_CODE_INSTRUCTIONS.md`; this file records what exists,

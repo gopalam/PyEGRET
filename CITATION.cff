@@ -16,8 +16,8 @@ type: software
 authors:
   - family-names: Mulukutla
     given-names: Gopal
-version: 0.1.0
-date-released: "2026-10-26"
+version: 0.2.0
+date-released: "2026-10-29"
 repository-code: "https://github.com/gopalam/PyEGRET"
 url: "https://github.com/gopalam/PyEGRET"
 license: BSD-3-Clause

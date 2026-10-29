@@ -266,5 +266,5 @@ def test_describe_elist_model_no(simple_elist):
 
 def test_egret_import():
     import pyegret
-    assert pyegret.__version__ == "0.1.0"
+    assert pyegret.__version__ == "0.2.0"
     assert pyegret.make_elist is make_elist

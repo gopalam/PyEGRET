@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-10-29
+
+Adds the bootstrap uncertainty of EGRETci (`pyegret.ci`), fixes the USGS and
+Water Quality Portal sample readers against the live services, and adds the
+first three tutorials.
 
 - **Uncertainty: EGRETci translated** (`pyegret.ci`). `run_pairs_boot` and
   `run_groups_boot` give bootstrap confidence intervals, two-sided p-values

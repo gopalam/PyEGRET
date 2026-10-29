@@ -12,7 +12,7 @@ from pyegret.data.merge_report import merge_report
 from pyegret.model.model_estimation import model_estimation
 from pyegret.model.kalman import wrtds_kalman
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "make_elist",
