@@ -23,6 +23,22 @@
 - `read_waterdata_info` now takes the parameter's name and units from the USGS
   parameter-code table, as R does, warns when the units are not mg/L, and sets
   `station_nm`, `paStart` and `paLong`.
+- **Fixed `read_wqp_sample`**, the Water Quality Portal reader for state,
+  tribal and local agency data. It dropped every result reported as not
+  detected (all 29 in one test record), which biases concentrations upward,
+  and it ignored start and end dates. It now follows R's `readWQPSample`:
+  non-detects become "less than" values at their detection limit, every
+  result is kept with its descriptive columns, a message lists fractions,
+  activity types and methods that vary, and USGS sites are passed to
+  `read_waterdata_sample`. Two wordings R misses ("Below Detection Limit",
+  "Below Reporting Limit") are also treated as non-detects, and a non-detect
+  with no detection limit is named in a warning before it is dropped.
+- The processing shared by the two sample readers is in
+  `pyegret.data.qw_processing`; `process_wqp_results` mirrors R's
+  `processQWData`.
+- `read_nwis_sample` now calls `read_waterdata_sample`, as R's
+  `readNWISSample` does, with a `FutureWarning`; it used to read the portal's
+  copy of USGS data, which stopped updating in March 2024.
 - `diagnostics/check_waterdata.py` compares a live download with EGRET's
   Choptank record; on 27 October 2026 the samples matched exactly and the
   discharge differed only by USGS's later rounding to three significant

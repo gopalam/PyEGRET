@@ -14,6 +14,8 @@ from pyegret.data.quality import (
     data_overview,
     make_augmented_sample,
 )
+from pyegret.data.read_wqp import read_wqp_sample
+from pyegret.data.qw_processing import process_wqp_results, wqp_results_to_sample
 from pyegret.data.read_waterdata import (
     read_waterdata_daily,
     read_waterdata_sample,
@@ -34,6 +36,9 @@ __all__ = [
     "read_waterdata_sample",
     "read_waterdata_info",
     "usgs_location_id",
+    "read_wqp_sample",
+    "process_wqp_results",
+    "wqp_results_to_sample",
     "populate_concentrations",
     "process_qw_data",
     "fix_sample_frame",

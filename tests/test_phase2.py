@@ -444,7 +444,9 @@ def test_read_nwis_daily_choptank():
 @pytest.mark.network
 def test_read_nwis_sample_choptank():
     from pyegret.data.read_nwis import read_nwis_sample
-    df = read_nwis_sample("01491000", "00631", start_date="2000-01-01", end_date="2005-12-31")
+    with pytest.warns(FutureWarning, match="read_waterdata_sample"):
+        df = read_nwis_sample("01491000", "00631", start_date="2000-01-01",
+                              end_date="2005-12-31")
     assert "ConcHigh" in df.columns
     assert len(df) > 0
 

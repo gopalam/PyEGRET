@@ -19,6 +19,7 @@ import pandas as pd
 import pytest
 
 from pyegret.data import read_waterdata as rw
+from pyegret.data.qw_processing import process_wqp_results
 
 
 # ---------------------------------------------------------------------------
@@ -289,7 +290,7 @@ def test_read_sample_recognises_r_non_detect_wordings():
         "ResultDetectionConditionText": texts,
         "DetectionQuantitationLimitMeasure.MeasureValue": [0.05] * 5 + [np.nan],
     })
-    processed = rw._process_qw_data(frame, verbose=False)
+    processed = process_wqp_results(frame, verbose=False)
     assert list(processed["qualifier"]) == ["<"] * 5 + [""]
     assert list(processed["value"]) == [0.05] * 5 + [0.7]
 

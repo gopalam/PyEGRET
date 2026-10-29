@@ -199,11 +199,34 @@ def compare_with_reference(fetched: dict) -> None:
                 print("  PASS - the first result of each day reproduces EGRET's record exactly.")
 
 
+def water_quality_portal() -> None:
+    """Read a non-USGS site whose record has non-detects, through the portal."""
+    from pyegret.data.read_wqp import read_wqp_sample
+
+    _heading("Water Quality Portal: NOOKSACK_WQX-SW08, Phosphorus")
+    try:
+        sample = read_wqp_sample("NOOKSACK_WQX-SW08", "Phosphorus", verbose=False)
+    except Exception:
+        print(f"FAILED:\n{traceback.format_exc()}")
+        return
+    censored = sample[sample["Uncen"] == 0]
+    print(f"{len(sample)} samples, {len(censored)} censored")
+    if len(censored) == 0:
+        print("  !! No censored results: non-detects are being lost.")
+        return
+    limits = sorted(set(censored["ConcHigh"]))
+    print(f"  censored at {limits} mg/L (the site reported 15 non-detects at 0.01 "
+          "in October 2026)")
+    if np.all(censored["ConcLow"] == 0) and np.all(np.isfinite(censored["ConcHigh"])):
+        print("  PASS - non-detects are kept as intervals from 0 to the detection limit.")
+
+
 def main() -> None:
     environment()
     raw_responses()
     fetched = converted()
     compare_with_reference(fetched)
+    water_quality_portal()
     _heading("Done")
     print("Paste this whole output back and any column mismatch can be fixed\n"
           "without another round trip.")

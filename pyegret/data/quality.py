@@ -15,7 +15,7 @@ when it has been damaged, and - through :func:`make_augmented_sample` - give
 you a defensible way to *plot* censored values without pretending they are
 points.
 
-Mirrors R EGRET's ``populateConcentrations``, ``processQWData``,
+Mirrors R EGRET's ``populateConcentrations``,
 ``fixSampleFrame``, ``dataOverview`` and ``makeAugmentedSample``.
 """
 from __future__ import annotations
@@ -101,9 +101,11 @@ def process_qw_data(
 ) -> pd.DataFrame:
     """Build an EGRET Sample frame from a table of dates, values and remarks.
 
-    Mirrors R ``processQWData()``. This is the entry point for laboratory
-    exports and monitoring databases that report a concentration alongside a
-    remark code, rather than pre-split bounds.
+    A general-purpose helper with no exact R counterpart, for laboratory
+    exports and databases that report a concentration alongside a remark
+    code (``""``, ``"<"`` or ``">"``). For results in the Water Quality
+    Portal's own format, :func:`~pyegret.data.qw_processing.process_wqp_results`
+    mirrors R ``processQWData()``.
 
     Args:
         frame: Source table.

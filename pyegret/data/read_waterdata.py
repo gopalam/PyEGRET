@@ -32,9 +32,9 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from pyegret.data.compress_data import compress_data, remove_zeros
-from pyegret.data.populate import populate_daily, populate_date_columns, populate_sample_columns
-from pyegret.utils.convert import as_dates, as_float_array, clean_text
+from pyegret.data.populate import populate_daily
+from pyegret.data.qw_processing import wqp_results_to_sample
+from pyegret.utils.convert import as_dates, clean_text
 
 __all__ = [
     "read_waterdata_daily",
@@ -53,17 +53,6 @@ DAILY_MEAN = "00003"
 # Unit strings the daily service is known to use for discharge, lowercased.
 _CFS_UNITS = frozenset({"ft3/s", "cfs", "ft^3/s", "cubic feet per second"})
 _CMS_UNITS = frozenset({"m3/s", "cms", "m^3/s", "cubic meters per second"})
-
-# Detection-condition text that marks a non-detect. Mirrors R processQWData():
-# a result is censored ("<") when its ResultDetectionConditionText contains
-# any of these, ignoring case.
-NON_DETECT_TEXT = (
-    "NON-DETECT",
-    "NON DETECT",
-    "NOT DETECTED",
-    "DETECTED NOT QUANTIFIED",
-    "BELOW QUANTIFICATION LIMIT",
-)
 
 # The Samples service's column names, and the Water Quality Portal names that
 # EGRET's code uses for them. Mirrors R ``conversion_names`` in readNWISSample.R.
@@ -84,40 +73,6 @@ SAMPLES_LEGACY_NAMES = {
     "Result_MeasureStatusIdentifier": "ResultStatusIdentifier",
     "Result_MeasureType": "ResultValueTypeName",
 }
-
-# Columns R's processQWData() keeps, as (new name, source column).
-SAMPLE_DESCRIPTION_COLUMNS = (
-    ("CharacteristicName", "CharacteristicName"),
-    ("USGSPCode", "USGSPCode"),
-    ("ActivityStartDateTime", "ActivityStartDateTime"),
-    ("ActivityTypeCode", "ActivityTypeCode"),
-    ("ActivityMediaName", "ActivityMediaName"),
-    ("ActivityMediaSubdivision", "ActivityMediaSubdivisionName"),
-    ("SampleCollectionMethod", "SampleCollectionMethod.MethodName"),
-    ("ResultAnalyticalMethod", "ResultAnalyticalMethod.MethodIdentifier"),
-    ("ResultSampleFraction", "ResultSampleFractionText"),
-    ("ResultStatusIdentifier", "ResultStatusIdentifier"),
-    ("ResultValueTypeName", "ResultValueTypeName"),
-)
-
-# The characteristics processQWData() reports when they vary between samples.
-SAMPLE_CHECK_COLUMNS = (
-    "USGSPCode",
-    "CharacteristicName",
-    "ActivityTypeCode",
-    "ActivityMediaName",
-    "ActivityMediaSubdivision",
-    "SampleCollectionMethod",
-    "ResultAnalyticalMethod",
-    "ResultSampleFraction",
-)
-
-# The Sample columns R puts first, in R's order.
-SAMPLE_CORE_COLUMNS = (
-    "Date", "ConcLow", "ConcHigh", "Uncen", "ConcAve", "Julian", "Month", "Day",
-    "DecYear", "waterYear", "MonthSeq", "SinDY", "CosDY",
-)
-
 
 def usgs_location_id(site_id: str) -> str:
     """Return a monitoring location id in the modern ``USGS-#####`` form.
@@ -498,105 +453,15 @@ def _is_cubic_feet(frame: pd.DataFrame, parameter_cd: str) -> bool:
     return parameter_cd == "00060"
 
 
-def _column_or_missing(frame: pd.DataFrame, name: str) -> pd.Series:
-    """The named column, or a column of missing values if it is absent."""
-    if name in frame.columns:
-        column = frame[name]
-        return column.reset_index(drop=True)
-    return pd.Series([np.nan] * len(frame))
-
-
-def _process_qw_data(data: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
-    """Mark non-detects and choose each result's value. Mirrors R ``processQWData()``.
-
-    ``data`` has the Water Quality Portal column names (see
-    ``SAMPLES_LEGACY_NAMES``). A non-detect gets the qualifier ``"<"`` and its
-    detection limit as the value; anything else keeps its measured value.
-    """
-    for needed in ("ActivityStartDate", "ResultMeasureValue"):
-        if needed not in data.columns:
-            raise ValueError(
-                f"The Samples response has no {needed!r} column. Available "
-                f"columns are {list(data.columns)}. Run "
-                "diagnostics/check_waterdata.py to dump the raw response."
-            )
-
-    detect_text = clean_text(_column_or_missing(data, "ResultDetectionConditionText"))
-    detect_text = detect_text.str.upper()
-    censored = np.zeros(len(data), dtype=bool)
-    for text in NON_DETECT_TEXT:
-        found = detect_text.str.contains(text, regex=False)
-        censored = censored | found.to_numpy()
-
-    measured = as_float_array(_column_or_missing(data, "ResultMeasureValue"))
-    limit = as_float_array(
-        _column_or_missing(data, "DetectionQuantitationLimitMeasure.MeasureValue"))
-
-    processed = pd.DataFrame({
-        "dateTime": as_dates(_column_or_missing(data, "ActivityStartDate")),
-        "qualifier": np.where(censored, "<", ""),
-        "value": np.where(censored, limit, measured),
-    })
-    for new_name, source in SAMPLE_DESCRIPTION_COLUMNS:
-        processed[new_name] = _column_or_missing(data, source)
-
-    n_retrieved = len(processed)
-    has_date = processed["dateTime"].notna()
-    processed = processed[has_date]
-    processed = processed.reset_index(drop=True)
-    if verbose:
-        print(f"{n_retrieved} samples retrieved.")
-    if len(processed) != n_retrieved:
-        warnings.warn(f"{n_retrieved - len(processed)} samples removed because "
-                      "date is missing.", UserWarning, stacklevel=3)
-
-    if verbose:
-        varying = []
-        for column in SAMPLE_CHECK_COLUMNS:
-            values = pd.unique(processed[column])
-            if len(values) > 1:
-                varying.append((column, values))
-        if varying:
-            print("Multiple values for some sample characteristics:")
-            for column, values in varying:
-                listed = "', '".join(str(value) for value in values)
-                print(f"{column}: '{listed}'")
-    return processed
-
-
 def _to_egret_sample(frame: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
     """Convert a Samples-service results frame to EGRET Sample format.
 
-    Mirrors the body of R ``readNWISSample()``: rename, ``processQWData``,
-    ``compressData``, ``remove_zeros``, ``populateSampleColumns``.
+    Mirrors R ``readNWISSample()``: rename the columns to the Water Quality
+    Portal names, then run R's shared steps
+    (:func:`~pyegret.data.qw_processing.wqp_results_to_sample`).
     """
     renamed = frame.rename(columns=SAMPLES_LEGACY_NAMES)
-    processed = _process_qw_data(renamed, verbose=verbose)
-
-    first_three = ["dateTime", "qualifier", "value"]
-    compressed = compress_data(processed[first_three], verbose=verbose)
-    described = processed.drop(columns=first_three)
-    combined = pd.concat([compressed, described], axis=1)
-    combined = remove_zeros(combined, verbose=verbose)
-
-    sample = pd.DataFrame({
-        "Date": combined["dateTime"].to_numpy(),
-        "ConcLow": combined["ConcLow"].to_numpy(dtype=float),
-        "ConcHigh": combined["ConcHigh"].to_numpy(dtype=float),
-        "Uncen": combined["Uncen"].to_numpy(dtype=int),
-    })
-    sample = populate_date_columns(sample)
-    sample = populate_sample_columns(sample)
-    for new_name, _ in SAMPLE_DESCRIPTION_COLUMNS:
-        sample[new_name] = combined[new_name].to_numpy()
-
-    first = [name for name in SAMPLE_CORE_COLUMNS if name in sample.columns]
-    rest = [name for name in sample.columns if name not in first]
-    sample = sample[first + rest]
-    # A stable sort keeps several results on one day in the service's order.
-    sample = sample.sort_values("Date", kind="stable")
-    sample = sample.reset_index(drop=True)
-    return sample
+    return wqp_results_to_sample(renamed, verbose=verbose)
 
 
 def _parameter_record(waterdata, parameter_cd: str):
