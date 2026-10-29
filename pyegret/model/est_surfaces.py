@@ -124,6 +124,8 @@ def est_surfaces_on_grid(
     min_num_uncen: int = DEFAULT_MIN_NUM_UNCEN,
     edge_adjust: bool = True,
     verbose: bool = True,
+    dec_low: float | None = None,
+    dec_high: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Fit the WRTDS regression at every point of a given (year, logQ) grid.
 
@@ -140,15 +142,33 @@ def est_surfaces_on_grid(
         edge_adjust: Widen the time window near the ends of the sample
             record, whose ends are taken from :func:`decimal_high_low`.
         verbose: Print progress.
+        dec_low, dec_high: The record ends used for edge adjustment, when
+            they should not come from the sample (EGRETci's ``wBT`` uses the
+            first and last day of Daily, as R ``runSurvReg`` allows).
 
     Returns:
         ``(surfaces, windows_used)``: the ``(n_year, n_logQ, 3)`` surface
         and the time half-window each grid point ended up using.
     """
+    # Mirrors R runSurvReg(): samples without discharge are set aside, and the
+    # fit is refused when the minimums cannot be met. R's test is ">=".
+    has_q = ~np.isnan(sample["LogQ"].to_numpy(dtype=float))
+    if not np.all(has_q):
+        sample = sample[has_q]
+        sample = sample.reset_index(drop=True)
+    if min_num_uncen >= np.sum(sample["Uncen"].to_numpy()):
+        raise ValueError("min_num_uncen is greater than total number of samples")
+    if min_num_obs >= len(sample):
+        raise ValueError("min_num_obs is greater than total number of samples")
+
     s_years = sample["DecYear"].to_numpy(dtype=float)
     s_logQ = sample["LogQ"].to_numpy(dtype=float)
     s_uncen = sample["Uncen"].to_numpy()
-    dec_low, dec_high = decimal_high_low(sample)
+    sample_low, sample_high = decimal_high_low(sample)
+    if dec_low is None:
+        dec_low = sample_low
+    if dec_high is None:
+        dec_high = sample_high
 
     n_yr = len(vector_year)
     n_lq = len(vector_logQ)

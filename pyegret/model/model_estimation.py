@@ -71,8 +71,10 @@ def model_estimation(
     Returns:
         A new eList (the input is not changed), with ``surfaces`` fitted,
         ``Daily`` augmented with
-        ``ConcDay`` / ``FluxDay`` / ``FNConc`` / ``FNFlux``, and ``Sample``
-        augmented with ``yHat`` / ``SE`` / ``ConcHat`` / ``resid``.
+        ``ConcDay`` / ``FluxDay`` / ``FNConc`` / ``FNFlux``, ``Sample``
+        augmented with ``yHat`` / ``SE`` / ``ConcHat`` / ``resid``, and the
+        settings recorded in ``INFO`` (``windowY``, ``windowQ``, ``windowS``,
+        ``minNumObs``, ``minNumUncen``, ``edgeAdjust``), as R does.
 
     Raises:
         ValueError: If ``elist`` has no Sample data.
@@ -113,6 +115,17 @@ def model_estimation(
 
     if not cross_validate:
         elist = _est_sample_predictions(elist)
+
+    # As R's setUpEstimation does, record the settings in INFO, where
+    # EGRETci's functions read them.
+    info = elist["INFO"].copy()
+    info["windowY"] = window_y
+    info["windowQ"] = window_q
+    info["windowS"] = window_s
+    info["minNumObs"] = min_num_obs
+    info["minNumUncen"] = min_num_uncen
+    info["edgeAdjust"] = edge_adjust
+    elist["INFO"] = info
 
     if verbose:
         print("WRTDS model estimation complete.")

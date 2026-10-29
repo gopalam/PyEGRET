@@ -73,7 +73,8 @@ def run_series(
         elsewhere); the fitted surface and its axes; and INFO recording every
         setting, as R's ``runSeries`` writes them (``windowSide``,
         ``surfaceStart``, ``paStart`` and so on). The key ``"dateInfo"`` holds
-        the flow-normalization segments.
+        the flow-normalization segments, and ``"runSeries"`` is True (R's
+        attribute of the same name).
     """
     min_num_uncen = int(np.ceil(min(0.5 * min_num_obs, min_num_uncen)))
     setup = span_surface_elist(
@@ -111,5 +112,8 @@ def run_series(
     info["windowQ"] = window_q
     info["windowY"] = window_y
     info["windowS"] = window_s
+    info["edgeAdjust"] = edge_adjust
     out["INFO"] = info
+    # R marks its result with attr(eList, "runSeries"); EGRETci checks for it.
+    out["runSeries"] = True
     return out

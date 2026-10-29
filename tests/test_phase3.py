@@ -27,7 +27,7 @@ _TWO_PI = 2.0 * np.pi
 # Shared synthetic eList fixture (small grid: 4 year × 3 logQ)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _make_synthetic_elist(n_sample: int = 60, n_daily: int = 730) -> dict:
+def _make_synthetic_elist(n_sample: int = 130, n_daily: int = 730) -> dict:
     """Build a minimal but realistic eList for integration tests."""
     # Daily
     dates_d = pd.date_range("2000-01-01", periods=n_daily, freq="D")
@@ -36,7 +36,8 @@ def _make_synthetic_elist(n_sample: int = 60, n_daily: int = 730) -> dict:
     daily["LogQ"] = np.log(daily["Q"])
     daily = populate_date_columns(daily)
 
-    # Sample — 60 observations scattered through the record
+    # Sample: 130 observations scattered through the record, enough for R's
+    # default minimums (100 samples, 50 uncensored), which runSurvReg enforces.
     rng_idx = _RNG.integers(0, n_daily, size=n_sample)
     sample_dates = dates_d[rng_idx]
     conc = _RNG.lognormal(mean=0.2, sigma=0.4, size=n_sample)
