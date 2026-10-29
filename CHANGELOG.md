@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+- **Uncertainty: EGRETci translated** (`pyegret.ci`). `run_pairs_boot` and
+  `run_groups_boot` give bootstrap confidence intervals, two-sided p-values
+  and likelihoods for `run_pairs` and `run_groups` results; `wbt` is the
+  original WRTDS Bootstrap Test; `ci_calculations` gives confidence bands on
+  the flow-normalized history, drawn by `plot_conc_hist_boot` and
+  `plot_flux_hist_boot`; `plot_histogram_trend` shows the bootstrap
+  distribution; `gen_daily_boot` with `make_daily_pi`, `make_month_pi` and
+  `make_annual_pi` gives prediction intervals for WRTDS-Kalman estimates.
+- Bootstrap resamples are drawn with R's own random-number generator, seeded
+  as EGRETci seeds it, so each replicate matches EGRETci's one for one. Checked
+  against EGRETci 2.0.5 run in R 4.3.3 (`tests/reference/egretci/`, with the R
+  scripts): p-values and likelihoods identical, intervals within 0.3 to 0.6 %,
+  confidence bands within 0.03 % (median).
+- `gen_daily_boot` uses each bootstrap refit in its Kalman step, as EGRETci's
+  documentation describes; EGRETci 2.0.5's `genDailyBoot` does not (its
+  refits have no effect). `boot_surfaces=False` reproduces EGRETci.
+- Fitting a surface now refuses a sample with no more observations than
+  `min_num_obs` (or uncensored values than `min_num_uncen`), as R's
+  `runSurvReg` does, instead of carrying on with wider windows.
+- `model_estimation` records its settings in INFO (`windowY`, `windowQ`,
+  `windowS`, `minNumObs`, `minNumUncen`, `edgeAdjust`), as R does, and
+  `run_series` records `edgeAdjust` and marks its result with `runSeries`.
 - **Tutorials**: Jupyter notebooks in `tutorials/`, readable on GitHub and
   runnable locally or in Google Colab. Tutorial 1 is a complete WRTDS analysis
   of the Choptank River; tutorial 2 covers preparing your own data. The

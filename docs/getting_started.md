@@ -188,9 +188,35 @@ A few things worth knowing:
 - **Long gaps in sampling**: WRTDS will interpolate across them, which can
   look more certain than it is. `blank_time(elist, "2001-10-01",
   "2011-09-30")` removes the estimates for such a stretch.
-- **Significance**: PyEGRET does not yet provide bootstrap confidence
-  intervals or p-values (EGRETci). Until it does, a change reported by
-  `run_pairs` is an estimate without a stated uncertainty.
+- **Significance**: a change reported by `run_pairs` or `run_groups` is an
+  estimate. Its uncertainty comes from the bootstrap, below.
+
+## Uncertainty: confidence intervals and p-values
+
+`pyegret.ci` translates EGRETci, the companion package to EGRET (Hirsch,
+Archfield and De Cicco, 2015). It refits the model to many block-bootstrap
+resamples of the samples (blocks of 200 days keep their serial correlation)
+and uses the spread of the results:
+
+```python
+from pyegret.ci import run_pairs_boot, plot_histogram_trend, ci_calculations
+from pyegret.ci import plot_conc_hist_boot
+
+pairs = run_pairs(elist, 1995, 2015, window_side=7)
+boot = run_pairs_boot(elist, pairs, n_boot=100)   # a few minutes
+boot["bootOut"]          # 90 % interval (lowC, upC), p-value (pValC), likelihoods
+boot["wordsOut"]         # e.g. "Upward trend in concentration is very likely"
+fig, ax = plot_histogram_trend(elist, boot, flux=False)
+
+band = ci_calculations(elist, n_boot=100)          # most of an hour
+fig, ax = plot_conc_hist_boot(elist, band)
+```
+
+`run_groups_boot` does the same for `run_groups`, and `gen_daily_boot` with
+`make_annual_pi` gives prediction intervals for WRTDS-Kalman loads. Each
+bootstrap replicate is drawn exactly as EGRETci draws it, so results can be
+compared with R's directly; set `start_seed` to vary them. For publication,
+EGRETci's authors suggest at least 100 replicates.
 
 ## Finding a function
 

@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: >-
   If you use PyEGRET, please cite it as below, and also cite the WRTDS method
-  and the EGRET R package it translates (listed under references, and in
+  and the EGRET and EGRETci R packages it translates (listed under references, and in
   NOTICE.md).
 title: "PyEGRET: a Python translation of the USGS EGRET R package and the WRTDS method"
 abstract: >-
@@ -9,7 +9,8 @@ abstract: >-
   RivEr Trends) into Python: Weighted Regressions on Time, Discharge, and
   Season (WRTDS), flow normalization including the generalized form,
   WRTDS-Kalman, trend decomposition (runPairs, runGroups, runSeries),
-  streamflow trend analysis, and the EGRET plots. It is validated against
+  streamflow trend analysis, the EGRET plots, and the bootstrap uncertainty
+  of EGRETci. It is validated against
   results computed by R EGRET itself.
 type: software
 authors:
@@ -71,5 +72,36 @@ references:
     authors:
       - family-names: Hirsch
         given-names: Robert M.
+      - family-names: De Cicco
+        given-names: Laura A.
+  - type: software
+    title: "Exploration and Graphics for RivEr Trends (EGRET) Uncertainty and Confidence Intervals (EGRETci)"
+    version: 2.0.5
+    year: 2025
+    doi: 10.5066/P9CC9JEX
+    authors:
+      - family-names: Hirsch
+        given-names: Robert M.
+      - family-names: De Cicco
+        given-names: Laura A.
+      - family-names: Archfield
+        given-names: Stacey A.
+      - family-names: Murphy
+        given-names: Jennifer C.
+    publisher:
+      name: U.S. Geological Survey
+  - type: article
+    title: "A bootstrap method for estimating uncertainty of water quality trends"
+    year: 2015
+    doi: 10.1016/j.envsoft.2015.07.017
+    journal: Environmental Modelling & Software
+    volume: 73
+    start: 148
+    end: 166
+    authors:
+      - family-names: Hirsch
+        given-names: Robert M.
+      - family-names: Archfield
+        given-names: Stacey A.
       - family-names: De Cicco
         given-names: Laura A.

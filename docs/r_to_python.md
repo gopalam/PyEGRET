@@ -170,12 +170,46 @@ top level: `from pyegret import merge_report, model_estimation, wrtds_kalman`.
 | `printFluxUnitCheatSheet` | `print_flux_unit_cheat_sheet` | `pyegret.utils.units` | Print the flux units. Mirrors R ``printFluxUnitCheatSheet()``. |
 | `printqUnitCheatSheet` | `print_q_unit_cheat_sheet` | `pyegret.utils.units` | Print the discharge units. Mirrors R ``printqUnitCheatSheet()``. |
 
-## Not yet translated
+## Uncertainty (EGRETci)
 
-**EGRETci** (bootstrap confidence intervals and trend p-values): `wBT`,
-`runPairsBoot`, `runGroupsBoot`, `ciCalculations`, `ciBands`,
-`plotConcHistBoot`, `plotFluxHistBoot`, `genDailyBoot` and the prediction
-intervals. This is the next major piece of work.
+All in `pyegret.ci`, from EGRETci 2.0.5; import them with
+`from pyegret.ci import run_pairs_boot` and so on. R's `caseSetUp` data frame
+and `eBoot` list become a DataFrame and a dict with the same names.
+
+| R | Python | module | what it does |
+|---|---|---|---|
+| `runPairsBoot` | `run_pairs_boot` | `pyegret.ci.boot_trends` | Bootstrap confidence intervals, p-values and likelihoods for a `run_pairs` result. |
+| `runGroupsBoot` | `run_groups_boot` | `pyegret.ci.boot_trends` | The same for a `run_groups` result. |
+| `single_boot_run` (internal) | `single_boot_run` | `pyegret.ci.boot_trends` | One bootstrap replicate of a pairs or groups trend. |
+| `calc_boot_out` (internal) | `calc_boot_out` | `pyegret.ci.boot_trends` | Summarize the replicates. |
+| `boot_message` (internal) | `boot_message` | `pyegret.ci.boot_trends` | Print the bootstrap summary. |
+| `wBT` | `wbt` | `pyegret.ci.wbt` | The original WRTDS Bootstrap Test, with its early stopping. |
+| `trendSetUp` | `trend_set_up` | `pyegret.ci.bootstrap` | The set-up table for `wbt` (no interactive prompts). |
+| `setForBoot` | `set_for_boot` | `pyegret.ci.bootstrap` | Put the model settings into INFO for `wbt`. |
+| `estSliceSurfacesSimpleAlt` | `est_slice_surfaces` | `pyegret.ci.wbt` | The surface for one period of analysis only. |
+| `paVector` | `pa_vector` | `pyegret.ci.wbt` | Grid steps inside one period of analysis. |
+| `makeCombo` | `make_combo` | `pyegret.ci.wbt` | Join two slice surfaces. |
+| `makeTwoYearsResults` | `make_two_years_results` | `pyegret.ci.wbt` | Flow-normalized values of the two years. |
+| `blockSample` | `block_sample` | `pyegret.ci.bootstrap` | Block-bootstrap resample, drawn with R's generator. |
+| `pVal` | `p_val` | `pyegret.ci.bootstrap` | Two-sided p-value from the replicates. |
+| `wordLike` | `word_like` | `pyegret.ci.bootstrap` | Likelihoods in words ("very likely"). |
+| `words` | `words` | `pyegret.ci.bootstrap` | "Reject Ho" or "Do Not Reject Ho". |
+| `binom::binom.bayes` (central) | `binom_bayes` | `pyegret.ci.bootstrap` | The Bayesian interval `wBT` stops on. |
+| `ciCalculations` | `ci_calculations` | `pyegret.ci.ci_bands` | Confidence bands on the annual flow-normalized series. |
+| `bootAnnual` | `boot_annual` | `pyegret.ci.ci_bands` | Annual flow-normalized results from one resample. |
+| `ciBands` | `ci_bands` | `pyegret.ci.ci_bands` | The band from bootstrap annual results. |
+| `plotConcHistBoot` | `plot_conc_hist_boot` | `pyegret.ci.plots` | Concentration history with its confidence band. |
+| `plotFluxHistBoot` | `plot_flux_hist_boot` | `pyegret.ci.plots` | Flux history with its confidence band. |
+| `plotHistogramTrend` | `plot_histogram_trend` | `pyegret.ci.plots` | Histogram of the bootstrap trends. |
+| `genDailyBoot` | `gen_daily_boot` | `pyegret.ci.prediction` | Many plausible daily flux records (see docs/validation.md for one deliberate difference). |
+| `makeDailyPI` | `make_daily_pi` | `pyegret.ci.prediction` | Daily prediction intervals. |
+| `makeMonthPI` | `make_month_pi` | `pyegret.ci.prediction` | Monthly prediction intervals. |
+| `makeAnnualPI` | `make_annual_pi` | `pyegret.ci.prediction` | Annual prediction intervals. |
+| `monthSeqToDec` | `month_seq_to_dec` | `pyegret.ci.prediction` | Decimal year of a MonthSeq month. |
+| `saveEGRETci` | - | - | Not needed: save the results with pickle or `to_csv`. |
+| `jitterOn`, `V` arguments | - | - | Not translated: they need `jitterSam`, which is not translated either. |
+
+## Not yet translated
 
 **EGRET**: `plotFlowSingle`, `plotFour`, `plotFourStats`, `plotSDLogQ`,
 `tableFlowChange`, `printSeries` (PyEGRET's `plot_flow_trend` and the

@@ -14,13 +14,12 @@ Geological Survey in the R package
 [EGRET](https://github.com/DOI-USGS/EGRET). PyEGRET follows EGRET function by
 function and is checked against results that R EGRET itself produced.
 
-> **Status: version 0.1.0, beta.** The WRTDS model, flow normalization
-> (including generalized flow normalization), WRTDS-Kalman, the trend
-> functions `run_pairs`, `run_groups` and `run_series`, and 24 of EGRET's plots
-> are translated and validated. **Bootstrap confidence intervals and trend
-> p-values (EGRETci) are not yet available**; until they are, use R's EGRETci
-> for significance testing. PyEGRET is an independent project and is not a
-> USGS product.
+> **Status: beta.** The WRTDS model, flow normalization (including
+> generalized flow normalization), WRTDS-Kalman, the trend functions
+> `run_pairs`, `run_groups` and `run_series`, 24 of EGRET's plots, and the
+> bootstrap confidence intervals, p-values and prediction intervals of the
+> companion package EGRETci are translated and validated against R.
+> PyEGRET is an independent project and is not a USGS product.
 
 <p align="center">
   <img src="docs/images/choptank_conc_hist.png" width="48%"
@@ -43,6 +42,11 @@ function and is checked against results that R EGRET itself produced.
   CQTC) and the part due to streamflow (QTC).
 - **WRTDS-Kalman** daily estimates that use the serial correlation of the
   residuals, for the best estimate of what actually happened on each day.
+- **Uncertainty** (EGRETci, in `pyegret.ci`): block-bootstrap confidence
+  intervals, two-sided p-values and likelihoods for a trend between two years
+  or two groups of years, confidence bands on the flow-normalized history,
+  and prediction intervals for WRTDS-Kalman daily, monthly and annual
+  estimates.
 - **Streamflow trends** without water-quality data: annual flow statistics
   and the Quantile-Kendall analysis.
 - **EGRET's tables and plots**: annual results, change tables, concentration
@@ -119,10 +123,16 @@ repository and vignettes; R is not needed to rerun the checks):
 | `runPairs(1985, 2010, windowSide = 7)`, Choptank | within 0.05 %; total change +38.5 % v. R's +38.6 % |
 | `runPairs` with a wall, a flow break and an April-August season | within 0.06 % |
 | `runSeries`, 68-year Green River chloride record, wall and flow break | annual values median 1e-6, worst year 0.1 % |
+| EGRETci `runPairsBoot`, 100 replicates, wall, flow break and season | same p-values and likelihoods; replicates median 0.04 %; interval ends within 0.3 % |
+| EGRETci `wBT`, Choptank 1985-2005 | stops at the same replicate (39); same p-values; intervals within 0.6 % |
+| EGRETci `ciCalculations` (`modelEstimation` and `runSeries` baselines) | confidence bands median 0.01-0.03 % |
 
-The small differences come from the optimizer: SciPy's L-BFGS-B and R's
-`survreg` settle a few decimals apart where the data constrain the
-regression least. Details in [docs/validation.md](docs/validation.md).
+PyEGRET draws its bootstrap resamples with R's own random-number generator,
+seeded as EGRETci seeds it, so each replicate uses exactly the samples R's
+does and the two can be compared one for one. The small differences come from
+the optimizer: SciPy's L-BFGS-B and R's `survreg` settle a few decimals apart
+where the data constrain the regression least. Details in
+[docs/validation.md](docs/validation.md).
 
 ## Documentation
 
@@ -157,9 +167,18 @@ PyEGRET entry):
   Graphics for RivEr Trends (EGRET), version 3.0.12.
   <https://doi.org/10.5066/P9CC9JEX>
 
-Citations for generalized flow normalization (Choquette and others, 2019),
-WRTDS-Kalman (Zhang and Hirsch, 2019) and the bootstrap method (Hirsch and
-others, 2015) are in [NOTICE.md](NOTICE.md).
+If you report bootstrap uncertainty from `pyegret.ci`, please also cite the
+method and EGRETci:
+
+- Hirsch, R.M., Archfield, S.A., and De Cicco, L.A., 2015, A bootstrap method
+  for estimating uncertainty of water quality trends: Environmental Modelling
+  & Software, v. 73, p. 148-166. <https://doi.org/10.1016/j.envsoft.2015.07.017>
+- Hirsch, R.M., De Cicco, L.A., Archfield, S.A., and Murphy, J.C., 2025,
+  Exploration and Graphics for RivEr Trends (EGRET) Uncertainty and Confidence
+  Intervals, version 2.0.5. <https://doi.org/10.5066/P9CC9JEX>
+
+Citations for generalized flow normalization (Choquette and others, 2019) and
+WRTDS-Kalman (Zhang and Hirsch, 2019) are in [NOTICE.md](NOTICE.md).
 
 ## License
 

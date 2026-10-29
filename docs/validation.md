@@ -39,10 +39,79 @@ Two further differences are known and expected:
   guarantees: it reproduces the sampled concentration exactly on sampled days,
   and its conditional simulation matches the AR(1) bridge mean.
 
+## EGRETci: bootstrap uncertainty
+
+`pyegret.ci` was checked against EGRETci 2.0.5 itself. The R sources in
+`reference/` were run in R 4.3.3 (survival 3.5-8) on the Choptank record, and
+the results were saved in `tests/reference/egretci/` with the scripts that
+made them.
+
+**Same resamples as R.** EGRETci draws each bootstrap resample after
+`RNGversion("3.5.0"); set.seed(startSeed + i)`. PyEGRET reproduces R's
+Mersenne-Twister, its seeding, and its pre-3.6 `sample()` exactly
+(`pyegret.ci.r_random`), so replicate *i* in PyEGRET resamples the same
+samples, in the same order, as replicate *i* in R. That makes the comparison
+one for one rather than only in distribution: any difference between a
+PyEGRET replicate and R's is the model fit, not the resampling.
+
+| what R ran | agreement |
+|---|---|
+| `blockSample` (two seeds, two block lengths) | identical rows |
+| `binom.bayes` (central), `pVal`, `wordLike` | identical |
+| `runPairsBoot`, wall, flow break, April-August, 100 replicates | replicates median 0.04 %; same p-values (0.0198) and likelihoods; interval ends within 0.3 % |
+| `runPairsBoot`, `windowSide = 7`, 30 replicates | replicates within 0.5 % |
+| `wBT`, 1985-2005, nBoot 100, bootBreak 39 | stops at the same replicate (39); replicates within 0.6 %; same p-values and likelihoods |
+| `runGroupsBoot`, wall, April-May, 20 replicates | replicates within 0.0016 mg/L and 0.0005 x 10^6 kg/yr; same likelihoods; p-values 0.095 v. 0.095 and 0.564 v. 0.562 |
+| `bootAnnual` and `ciBands`, `modelEstimation` baseline | replicates typically 0.1 %; bands median 0.01-0.03 %, worst 0.16 % |
+| the same with a `runSeries` baseline (`windowSide = 7`) | bands median 0.01-0.03 %, worst 1.3 % |
+
+About one replicate in a hundred differs by more: in the pairs run,
+replicate 80's flux change differs by 30 % while its concentration change
+agrees to 0.1 %. In that replicate R's `survreg` failed to converge at five
+grid points of one surface; R then jitters the data at random and refits, a
+path PyEGRET does not follow, and the two surfaces differ by a few percent in
+11 of their 126 cells, mostly at extrapolated low discharges near the end of
+the record. The intervals built from all the replicates are hardly affected,
+as the table shows.
+
+**EGRETci's own vignette file.** `bootPairOut2.rds` in EGRETci's vignettes
+agrees with PyEGRET replicate for replicate up to replicate 54. In the R
+setup that wrote it, replicate 55's fit failed, so every later replicate is
+shifted by one. With current R that replicate fits (R gives 0.4237, PyEGRET
+0.4239) and the shift disappears, which is why the references above were
+recomputed.
+
+### Deliberate differences from EGRETci
+
+- **`gen_daily_boot` uses each bootstrap refit.** In EGRETci 2.0.5,
+  `genDailyBoot` fits a surface to each resample but `WRTDSKalman` takes
+  `yHat` and `SE` from `Daily`, which still holds the original model's
+  values, so the refits have no effect: run in R with `nKalman = 1` and a
+  fixed seed, its two bootstrap replicates are identical to the last digit.
+  EGRETci's documentation says each replicate "is used to estimate the WRTDS
+  model (we can think of this as the estimation error)", and PyEGRET does
+  that, recomputing `Daily` and the sample predictions from each refit before
+  the Kalman step. `boot_surfaces=False` reproduces EGRETci 2.0.5. The
+  prediction intervals are therefore somewhat wider than EGRETci's.
+- **`run_pairs_boot` passes the windows `run_pairs` used.** R's
+  `runPairsBoot` leaves `windowY`, `windowQ` and `windowS` at their defaults
+  inside each replicate, whatever `runPairs` was given. The results are the
+  same unless the windows were changed.
+- **No extra replicate.** R's loop fits one replicate more than it needs and
+  discards it; PyEGRET stops at `n_boot`. The results are the same.
+- **`jitterOn`** is not translated (it needs `jitterSam`).
+
+Translating EGRETci also brought one fix to the core: like R's `runSurvReg`,
+fitting a surface now refuses, with an error, a sample with no more
+observations than `min_num_obs` (or uncensored values than `min_num_uncen`),
+where PyEGRET used to carry on with the windows widened. R's bootstrap relies
+on this to reject a resample.
+
 ## Rerunning the checks
 
 ```
 python -m pytest tests/test_egret_reference.py tests/test_egret_trend_reference.py
+python -m pytest tests/test_egretci.py
 python diagnostics/validate_against_egret.py     # prints the Choptank comparison
 ```
 

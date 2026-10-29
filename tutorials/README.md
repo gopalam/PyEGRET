@@ -11,7 +11,8 @@ can read them here on GitHub, figures and all, without running anything.
 | 3 | [Downloading data from USGS](03_usgs_data.ipynb) | Finding site numbers and parameter codes, downloading discharge, samples and site information, what to do about several results on one day and oddly coded results, checking the download against EGRET's record, and keeping a copy of what you analysed. Needs an internet connection. |
 
 More are planned: interpreting trends with `run_pairs`, `run_groups` and
-`run_series`, WRTDS-Kalman load estimates, and model diagnostics.
+`run_series` and their bootstrap uncertainty (`pyegret.ci`), WRTDS-Kalman load
+estimates with prediction intervals, and model diagnostics.
 
 ## Running them
 

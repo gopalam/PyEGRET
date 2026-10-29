@@ -30,6 +30,10 @@ For the reference implementation, use EGRET:
   `ChainBridge.TP.RData`, `pairResults.rds`, `pairResults2.rds`,
   `eListOut.rds`) come unmodified from the EGRET repository and are likewise
   CC0 1.0 (public domain). They are used only to check PyEGRET against R.
+- `tests/reference/egretci/` holds results computed by running the EGRET and
+  EGRETci R sources above on that data (the scripts are in its `r/` folder),
+  kept to check `pyegret.ci` against R; `r/Choptank_caseSetUp.RData` is copied
+  unchanged from EGRETci. They carry no further restriction.
 - `tutorials/data/choptank_daily.csv` and `choptank_sample.csv` are the
   Daily and Sample of the same `Choptank_eList`, written out as CSV (discharge
   converted back to cubic feet per second), and are likewise public domain.
@@ -67,7 +71,7 @@ and, for the parts of the method you use:
   accounting for serial correlation through an autoregressive model: Water
   Resources Research, v. 55, no. 11, p. 9705-9723.
   <https://doi.org/10.1029/2019WR025338>
-- Bootstrap uncertainty (EGRETci; planned for PyEGRET): Hirsch, R.M.,
+- Bootstrap uncertainty (`pyegret.ci`, translating EGRETci): Hirsch, R.M.,
   Archfield, S.A., and De Cicco, L.A., 2015, A bootstrap method for estimating
   uncertainty of water quality trends: Environmental Modelling & Software,
   v. 73, p. 148-166. <https://doi.org/10.1016/j.envsoft.2015.07.017>

@@ -1,13 +1,12 @@
 # PyEGRET - status and roadmap
 
-Last updated 2026-10-25, at version 0.1.0.
+Last updated 2026-10-29.
 
-PyEGRET translates the USGS R packages EGRET (3.0.12) and, still to come,
-EGRETci (2.0.5). The R sources are in `reference/`. How the code must be
+PyEGRET translates the USGS R packages EGRET (3.0.12) and EGRETci (2.0.5). The R sources are in `reference/`. How the code must be
 written is in `docs/dev/CLAUDE_CODE_INSTRUCTIONS.md`; this file records what exists,
 how well it matches R, and what is left.
 
-420 tests pass offline (3 skipped need the live USGS service).
+462 tests pass offline (3 skipped need the live USGS service).
 `python diagnostics/check_style.py` reports 0 problems: no classes, no
 chained calls, and the package imports straight from the folder.
 
@@ -78,32 +77,27 @@ and R's `survreg` settle a few decimals apart.
 
 ## Remaining work, in order
 
-### 1. EGRETci - confidence intervals and trend p-values
+### Done since 0.1.0
 
-Not started, and the most important gap for publication: a WRTDS trend
-without a p-value is hard to publish. The R source is in
-`reference/EGRETci_R/`. Build order:
+- **EGRETci** (October 2026): `pyegret.ci`, checked replicate for replicate
+  against EGRETci 2.0.5 run in R (see docs/validation.md). Not translated:
+  `jitterOn` (needs `jitterSam`) and `saveEGRETci`.
+- **Live USGS check** (October 2026): `read_waterdata_*` verified against the
+  live service; the sample reader was rebuilt on R's steps, and
+  `read_wqp_sample` fixed (it dropped non-detects).
+- `read_nwis_sample` is now a wrapper of `read_waterdata_sample`.
 
-1. `blockSample` and `trendSetUp` / `setForBoot` (block bootstrap of the
-   Sample, default block 200 days).
-2. `wBT` - the WRTDS Bootstrap Test: two-sided p-values and likelihood
-   descriptors for change in FN concentration and flux between two years.
-3. `runPairsBoot` and `runGroupsBoot` - bootstrap versions of the trend
-   functions just ported; they reuse `run_pairs` / `run_groups` internals.
-4. `ciCalculations` / `ciBands` and `plotConcHistBoot` / `plotFluxHistBoot`.
-5. `genDailyBoot` and the prediction intervals for WRTDS-Kalman.
+### 1. Report upstream
 
-Cost: one surface fit per replicate. A Choptank-size record takes about 25 s
-for the full fit, so 100 replicates are roughly 40 minutes single-threaded,
-or a few minutes across processes; `run_pairs`-style partial fits are much
-cheaper (one year each).
+- EGRETci 2.0.5's `genDailyBoot` ignores its bootstrap refits (WRTDSKalman
+  reads `yHat` and `SE` from `Daily`). Worth an issue on
+  https://github.com/DOI-USGS/EGRETci with the R check in
+  `tests/reference/egretci/r/make_references.R`.
 
-### 2. Live USGS check - needs your machine
+### 2. Distribution
 
-`python diagnostics/check_waterdata.py` on a machine with internet access.
-The Water Data readers are tested only against stubbed responses; the column
-names the live service returns are unverified. Paste the output back and any
-mismatch is a small fix.
+- Publish on PyPI; link the repository to Zenodo for a DOI per release; a
+  short paper in the Journal of Open Source Software.
 
 ### 3. The rest of EGRET
 
@@ -119,8 +113,8 @@ mismatch is a small fix.
 
 ### 4. Tidy-ups
 
-- `read_nwis_*` could become thin wrappers of `read_waterdata_*`, as R's
-  `readNWIS*` functions now are, once item 2 confirms the live columns.
+- `read_nwis_daily` and `read_nwis_info` could become wrappers too.
+- `jitterSam`, which would make EGRETci's `jitterOn` option possible.
 
 ## Deliberate differences from R
 
